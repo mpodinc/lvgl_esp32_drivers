@@ -3,7 +3,11 @@ if(ESP_PLATFORM)
 file(GLOB SOURCES *.c)
 set(LVGL_INCLUDE_DIRS . lvgl_tft)
 list(APPEND SOURCES "lvgl_tft/disp_driver.c")
-list(APPEND SOURCES "lvgl_tft/esp_lcd_backlight.c")
+
+# Exclude compiling backlight controls if operating manually.
+if (CONFIG_LV_DISP_BACKLIGHT_SWITCH OR CONFIG_LV_DISP_BACKLIGHT_PWM)
+    list(APPEND SOURCES "lvgl_tft/esp_lcd_backlight.c")
+endif()
 
 # Include only the source file of the selected
 # display controller.
@@ -86,7 +90,7 @@ endif()
 
 idf_component_register(SRCS ${SOURCES}
                        INCLUDE_DIRS ${LVGL_INCLUDE_DIRS}
-                       REQUIRES lvgl)
+                       REQUIRES driver esp_rom lvgl)
 
 target_compile_definitions(${COMPONENT_LIB} PUBLIC "-DLV_LVGL_H_INCLUDE_SIMPLE")
 
