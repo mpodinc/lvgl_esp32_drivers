@@ -213,10 +213,12 @@ static void st7735s_set_orientation(uint8_t orientation)
 
     /*
         Portrait:  0xC8 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_BGR
+				Portrait Inverted: ST77XX_MADCTL_BGR
         Landscape: 0xA8 = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
+				Landscape Inverted: 0x08 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
         Remark: "inverted" is ignored here
     */
-    uint8_t data[] = {0xC8, 0xC8, 0xA8, 0xA8};
+    uint8_t data[] = {0x08, 0xC8, 0xA8, 0x68};
 
     ESP_LOGD(TAG, "0x36 command value: 0x%02X", data[orientation]);
 
