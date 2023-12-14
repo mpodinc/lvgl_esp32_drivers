@@ -2,12 +2,7 @@ if(ESP_PLATFORM)
 
 file(GLOB SOURCES *.c)
 set(LVGL_INCLUDE_DIRS . lvgl_tft)
-list(APPEND SOURCES "lvgl_tft/disp_driver.c")
-
-# Exclude compiling backlight controls if operating manually.
-if (CONFIG_LV_DISP_BACKLIGHT_SWITCH OR CONFIG_LV_DISP_BACKLIGHT_PWM)
-    list(APPEND SOURCES "lvgl_tft/esp_lcd_backlight.c")
-endif()
+list(APPEND SOURCES "lvgl_tft/disp_driver.c" "lvgl_tft/esp_lcd_backlight.c")
 
 # Include only the source file of the selected
 # display controller.
