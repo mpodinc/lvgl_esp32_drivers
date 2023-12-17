@@ -115,6 +115,21 @@ void st7735s_init(void)
 
 	ESP_LOGI(TAG, "ST7735S initialization.");
 
+	// Zero frame buffer, it is not cleared by a reset.
+	//132(H)x162(V), pick the largest.
+	uint16_t tmp[162] = {};
+	// We assume column_address resets to max frame width.
+	for (int i=0; i < 162; i++) {
+		/*Page addresses i*/
+		st7735s_send_cmd(0x2B);
+		uint8_t data[4] = {0, i, 0, i};
+		st7735s_send_data(data, 4);
+
+		/*Memory write*/
+		st7735s_send_cmd(0x2C);
+		st7735s_send_data(tmp, sizeof(tmp));
+	}
+	
 	//Send all the commands
 	uint16_t cmd = 0;
 	while (init_cmds[cmd].databytes!=0xff) {
