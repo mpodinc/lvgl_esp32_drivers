@@ -40,7 +40,7 @@ typedef struct {
 static void st7735s_send_cmd(uint8_t cmd);
 static void st7735s_send_data(void * data, uint16_t length);
 static void st7735s_send_color(void * data, uint16_t length);
-static void st7735s_set_orientation(uint8_t orientation);
+static void st7735s_set_orientation(lv_disp_rot_t orientation);
 #ifdef CONFIG_LV_M5STICKC_HANDLE_AXP192
 static void axp192_write_byte(uint8_t addr, uint8_t data);
 static void axp192_init();
@@ -51,6 +51,8 @@ static void axp192_sleep_out();
  *  STATIC VARIABLES
  **********************/
 uint8_t st7735s_portrait_mode = 0;
+lv_disp_rot_t current_rot;
+bool rotation_written_out = false;
 
 /**********************
  *      MACROS
@@ -141,17 +143,27 @@ void st7735s_init(void)
 		cmd++;
 	}
 
-#if (CONFIG_LV_DISPLAY_ORIENTATION == 0) || (CONFIG_LV_DISPLAY_ORIENTATION == 1)
-	st7735s_portrait_mode = 1;
-#else
-	st7735s_portrait_mode = 0;
-#endif
-
-    st7735s_set_orientation(CONFIG_LV_DISPLAY_ORIENTATION);
 }
 
 void st7735s_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_map)
 {
+	if (!rotation_written_out || current_rot != drv->rotated) {
+		// CONFIG_LV_DISPLAY_ORIENTATION goes "PORTRAIT"=0, "PORTRAIT_INVERTED"=1, "LANDSCAPE"=2, "LANDSCAPE_INVERTED"=3
+		// drv->rotated goes 0, 90, 180, 270
+		#if (CONFIG_LV_DISPLAY_ORIENTATION == 0) || (CONFIG_LV_DISPLAY_ORIENTATION == 1)
+		st7735s_portrait_mode = !drv->sw_rotate || (drv->rotated == LV_DISP_ROT_NONE) || (drv->rotated == LV_DISP_ROT_180);
+		#else
+		st7735s_portrait_mode = drv->sw_rotate && ((drv->rotated == LV_DISP_ROT_90) || (drv->rotated == LV_DISP_ROT_270));
+		#endif
+		// Given a drv->rotated and a CONFIG_LV_DISPLAY_ORIENTATION, figure out display rotation.
+		const lv_disp_rot_t orientation_to_rotation[4] = {LV_DISP_ROT_NONE, LV_DISP_ROT_180, LV_DISP_ROT_90, LV_DISP_ROT_270};
+		const lv_disp_rot_t net_rotation = (orientation_to_rotation[CONFIG_LV_DISPLAY_ORIENTATION] + drv->rotated) % 4;
+
+		st7735s_set_orientation(drv->sw_rotate ? LV_DISP_ROT_NONE : net_rotation);
+		current_rot = drv->sw_rotate ? drv->rotated : LV_DISP_ROT_NONE;
+		rotation_written_out = true;
+	}
+
 	uint8_t data[4];
 
 	/*Column addresses*/
@@ -218,27 +230,28 @@ static void st7735s_send_color(void * data, uint16_t length)
 	disp_spi_send_colors(data, length);
 }
 
-static void st7735s_set_orientation(uint8_t orientation)
+static void st7735s_set_orientation(lv_disp_rot_t orientation)
 {
-    const char *orientation_str[] = {
-        "PORTRAIT", "PORTRAIT_INVERTED", "LANDSCAPE", "LANDSCAPE_INVERTED"
-    };
 
-    ESP_LOGD(TAG, "Display orientation: %s", orientation_str[orientation]);
+	ESP_LOGD(TAG, "Display orientation: %d", orientation);
 
-    /*
-        Portrait:  0xC8 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_BGR
-				Portrait Inverted: ST77XX_MADCTL_BGR
-        Landscape: 0xA8 = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
-				Landscape Inverted: 0x08 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
-        Remark: "inverted" is ignored here
-    */
-    uint8_t data[] = {0x08, 0xC8, 0xA8, 0x68};
+	/*
+		Portrait: 0x0: ST77XX_MADCTL_BGR
+		Portrait Inverted:  0xC0 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_BGR
+		Landscape Inverted: 0xA0 = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
+		Landscape: 0x60 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
+	*/
+  uint8_t data_table[] = {0x00, 0x60, 0xC0, 0xA0};
+	//uint8_t data_table[] = {0xC8, 0xA0, 0x00, 0x60};
+#ifdef CONFIG_LV_DISP_ST7735S_SWAP_RGB_TO_BGR
+	uint8_t data = data_table[orientation] | 0x80;
+#else
+	uint8_t data = data_table[orientation];
+#endif
+	ESP_LOGD(TAG, "0x36 command value: 0x%02X", data);
 
-    ESP_LOGD(TAG, "0x36 command value: 0x%02X", data[orientation]);
-
-    st7735s_send_cmd(ST7735_MADCTL);
-    st7735s_send_data((void *) &data[orientation], 1);
+	st7735s_send_cmd(ST7735_MADCTL);
+	st7735s_send_data((const void *) &data, 1);
 }
 
 #ifdef CONFIG_LV_M5STICKC_HANDLE_AXP192
