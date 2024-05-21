@@ -228,6 +228,7 @@ menu "LVGL TFT Display controller"
         int "X offset"
         default 40 if LV_PREDEFINED_DISPLAY_TTGO && (LV_DISPLAY_ORIENTATION_LANDSCAPE || LV_DISPLAY_ORIENTATION_LANDSCAPE_INVERTED)
         default 53 if LV_PREDEFINED_DISPLAY_TTGO && (LV_DISPLAY_ORIENTATION_PORTRAIT  || LV_DISPLAY_ORIENTATION_PORTRAIT_INVERTED)
+        default 24 if LV_TFT_DISPLAY_USER_CONTROLLER_ST7735S
         default 0
 
     config LV_TFT_DISPLAY_Y_OFFSET
@@ -235,6 +236,7 @@ menu "LVGL TFT Display controller"
         int "Y offset"
         default 53  if LV_PREDEFINED_DISPLAY_TTGO && (LV_DISPLAY_ORIENTATION_LANDSCAPE || LV_DISPLAY_ORIENTATION_LANDSCAPE_INVERTED)
         default 40 if LV_PREDEFINED_DISPLAY_TTGO && (LV_DISPLAY_ORIENTATION_PORTRAIT  || LV_DISPLAY_ORIENTATION_PORTRAIT_INVERTED)
+        default 0 if LV_TFT_DISPLAY_USER_CONTROLLER_ST7735S
         default 0
 
 
@@ -303,6 +305,7 @@ menu "LVGL TFT Display controller"
             bool "ST7735S"
             select LV_TFT_DISPLAY_CONTROLLER_ST7735S
             select LV_TFT_DISPLAY_PROTOCOL_SPI
+            select LV_TFT_DISPLAY_OFFSETS
     config LV_TFT_DISPLAY_USER_CONTROLLER_HX8357
         bool "HX8357"
             select LV_TFT_DISPLAY_CONTROLLER_HX8357
@@ -745,26 +748,173 @@ menu "LVGL TFT Display controller"
     menu "Display ST7735S Configuration"
     visible if LV_TFT_DISPLAY_CONTROLLER_ST7735S
 
-        config LV_DISP_ST7735S_COLSTART
-            int "The column offset start for display"
-            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
-            default 24
-            help
-                The column offset start for display.
-
-        config LV_DISP_ST7735S_ROWSTART
-            int "The row offset start for display"
-            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
-            default 0
-            help
-                The row offset start for display.
-
         config LV_DISP_ST7735S_SWAP_RGB_TO_BGR
             bool "Swaps the color encoding order from RGB to BGR"
             depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
             default y
             help
                 Swaps the color encoding order from RGB to BGR.
+
+        config LV_DISP_ST7735S_GMCTRP1_0
+            hex "Gamma control positive 0"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x02
+
+        config LV_DISP_ST7735S_GMCTRP1_1
+            hex "Gamma control positive 1"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x1c
+
+        config LV_DISP_ST7735S_GMCTRP1_2
+            hex "Gamma control positive 2"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x07
+
+        config LV_DISP_ST7735S_GMCTRP1_3
+            hex "Gamma control positive 3"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x12
+
+        config LV_DISP_ST7735S_GMCTRP1_4
+            hex "Gamma control positive 4"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x37
+
+        config LV_DISP_ST7735S_GMCTRP1_5
+            hex "Gamma control positive 5"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x32
+
+        config LV_DISP_ST7735S_GMCTRP1_6
+            hex "Gamma control positive 6"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x29
+
+        config LV_DISP_ST7735S_GMCTRP1_7
+            hex "Gamma control positive 7"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2d
+
+        config LV_DISP_ST7735S_GMCTRP1_8
+            hex "Gamma control positive 8"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x29
+
+        config LV_DISP_ST7735S_GMCTRP1_9
+            hex "Gamma control positive 9"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x25
+
+        config LV_DISP_ST7735S_GMCTRP1_10
+            hex "Gamma control positive 10"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2b
+
+        config LV_DISP_ST7735S_GMCTRP1_11
+            hex "Gamma control positive 11"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x39
+
+        config LV_DISP_ST7735S_GMCTRP1_12
+            hex "Gamma control positive 12"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x00
+
+        config LV_DISP_ST7735S_GMCTRP1_13
+            hex "Gamma control positive 13"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x01
+
+        config LV_DISP_ST7735S_GMCTRP1_14
+            hex "Gamma control positive 14"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x03
+
+        config LV_DISP_ST7735S_GMCTRP1_15
+            hex "Gamma control positive 15"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x10
+
+        config LV_DISP_ST7735S_GMCTRN1_0
+            hex "Gamma control negative 0"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x03
+
+        config LV_DISP_ST7735S_GMCTRN1_1
+            hex "Gamma control negative 1"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x1d
+
+        config LV_DISP_ST7735S_GMCTRN1_2
+            hex "Gamma control negative 2"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x07
+
+        config LV_DISP_ST7735S_GMCTRN1_3
+            hex "Gamma control negative 3"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x06
+
+        config LV_DISP_ST7735S_GMCTRN1_4
+            hex "Gamma control negative 4"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2e
+
+        config LV_DISP_ST7735S_GMCTRN1_5
+            hex "Gamma control negative 5"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2c
+
+        config LV_DISP_ST7735S_GMCTRN1_6
+            hex "Gamma control negative 6"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x29
+
+        config LV_DISP_ST7735S_GMCTRN1_7
+            hex "Gamma control negative 7"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2d
+
+        config LV_DISP_ST7735S_GMCTRN1_8
+            hex "Gamma control negative 8"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2e
+
+        config LV_DISP_ST7735S_GMCTRN1_9
+            hex "Gamma control negative 9"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x2e
+
+        config LV_DISP_ST7735S_GMCTRN1_10
+            hex "Gamma control negative 10"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x37
+
+        config LV_DISP_ST7735S_GMCTRN1_11
+            hex "Gamma control negative 11"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x3f
+
+        config LV_DISP_ST7735S_GMCTRN1_12
+            hex "Gamma control negative 12"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x00
+
+        config LV_DISP_ST7735S_GMCTRN1_13
+            hex "Gamma control negative 13"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x00
+
+        config LV_DISP_ST7735S_GMCTRN1_14
+            hex "Gamma control negative 14"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x02
+
+        config LV_DISP_ST7735S_GMCTRN1_15
+            hex "Gamma control negative 15"
+            depends on LV_TFT_DISPLAY_CONTROLLER_ST7735S
+            default 0x10
+
     endmenu
 
     # menu will be visible only when LV_PREDEFINED_DISPLAY_NONE is y

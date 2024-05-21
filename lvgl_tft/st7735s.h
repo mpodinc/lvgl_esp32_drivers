@@ -37,8 +37,8 @@ extern "C" {
 //      https://github.com/adafruit/Adafruit-ST7735-Library
 //
 #define ST7735_GREENTAB160x80 // For 160 x 80 display (BGR, inverted, 26 / 1 offset)
-#define COLSTART            CONFIG_LV_DISP_ST7735S_COLSTART
-#define ROWSTART            CONFIG_LV_DISP_ST7735S_ROWSTART
+#define COLSTART            CONFIG_LV_TFT_DISPLAY_X_OFFSET
+#define ROWSTART            CONFIG_LV_TFT_DISPLAY_Y_OFFSET
 
 // Delay between some initialisation commands
 #define TFT_INIT_DELAY      0x80
