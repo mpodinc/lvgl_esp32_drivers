@@ -254,9 +254,8 @@ static void st7735s_set_orientation(lv_disp_rot_t orientation)
 		Landscape: 0x60 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
 	*/
   uint8_t data_table[] = {0x00, 0x60, 0xC0, 0xA0};
-	//uint8_t data_table[] = {0xC8, 0xA0, 0x00, 0x60};
 #ifdef CONFIG_LV_DISP_ST7735S_SWAP_RGB_TO_BGR
-	uint8_t data = data_table[orientation] | 0x80;
+	uint8_t data = data_table[orientation] | 0x8;
 #else
 	uint8_t data = data_table[orientation];
 #endif
