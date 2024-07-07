@@ -50,7 +50,6 @@ static void axp192_sleep_out();
 /**********************
  *  STATIC VARIABLES
  **********************/
-uint8_t st7735s_portrait_mode = 0;
 lv_disp_rot_t current_rot;
 bool rotation_written_out = false;
 
@@ -159,20 +158,19 @@ void st7735s_init(void)
 
 void st7735s_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_map)
 {
-	if (!rotation_written_out || current_rot != drv->rotated) {
-		// CONFIG_LV_DISPLAY_ORIENTATION goes "PORTRAIT"=0, "PORTRAIT_INVERTED"=1, "LANDSCAPE"=2, "LANDSCAPE_INVERTED"=3
-		// drv->rotated goes 0, 90, 180, 270
-		#if (CONFIG_LV_DISPLAY_ORIENTATION == 0) || (CONFIG_LV_DISPLAY_ORIENTATION == 1)
-		st7735s_portrait_mode = !drv->sw_rotate || (drv->rotated == LV_DISP_ROT_NONE) || (drv->rotated == LV_DISP_ROT_180);
-		#else
-		st7735s_portrait_mode = drv->sw_rotate && ((drv->rotated == LV_DISP_ROT_90) || (drv->rotated == LV_DISP_ROT_270));
-		#endif
-		// Given a drv->rotated and a CONFIG_LV_DISPLAY_ORIENTATION, figure out display rotation.
-		const lv_disp_rot_t orientation_to_rotation[4] = {LV_DISP_ROT_NONE, LV_DISP_ROT_180, LV_DISP_ROT_90, LV_DISP_ROT_270};
-		const lv_disp_rot_t net_rotation = (orientation_to_rotation[CONFIG_LV_DISPLAY_ORIENTATION] + drv->rotated) % 4;
+	// We compute the impact of the LV_DIS_ROT followed by the LVGL dynamic rotation.
+	const uint8_t drv_performed_rotation = drv->sw_rotate ? LV_DISP_ROT_NONE : drv->rotated;
+	// CONFIG_LV_DISPLAY_ORIENTATION goes "PORTRAIT"=0, "PORTRAIT_INVERTED"=1, "LANDSCAPE"=2, "LANDSCAPE_INVERTED"=3
+	const lv_disp_rot_t orientation_to_rotation[4] = {LV_DISP_ROT_NONE, LV_DISP_ROT_180, LV_DISP_ROT_90, LV_DISP_ROT_270};
+	// drv->rotated goes 0, 90, 180, 270.
+	const lv_disp_rot_t net_rotation = (orientation_to_rotation[CONFIG_LV_DISPLAY_ORIENTATION] + drv_performed_rotation) % 4;
 
-		st7735s_set_orientation(drv->sw_rotate ? LV_DISP_ROT_NONE : net_rotation);
-		current_rot = drv->sw_rotate ? drv->rotated : LV_DISP_ROT_NONE;
+	const bool portrait_mode = (drv->rotated == LV_DISP_ROT_NONE) || (drv->rotated == LV_DISP_ROT_180);
+
+	if (!rotation_written_out || (!drv->sw_rotate && current_rot != net_rotation)) {
+		// See if current setting is correct.
+		st7735s_set_orientation(net_rotation);
+		current_rot = net_rotation;
 		rotation_written_out = true;
 	}
 
@@ -181,17 +179,17 @@ void st7735s_flush(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * col
 	/*Column addresses*/
 	st7735s_send_cmd(0x2A);
 	data[0] = (area->x1 >> 8) & 0xFF;
-	data[1] = (area->x1 & 0xFF) + (st7735s_portrait_mode ? COLSTART : ROWSTART);
+	data[1] = (area->x1 & 0xFF) + (portrait_mode ? COLSTART : ROWSTART);
 	data[2] = (area->x2 >> 8) & 0xFF;
-	data[3] = (area->x2 & 0xFF) + (st7735s_portrait_mode ? COLSTART : ROWSTART);
+	data[3] = (area->x2 & 0xFF) + (portrait_mode ? COLSTART : ROWSTART);
 	st7735s_send_data(data, 4);
 
 	/*Page addresses*/
 	st7735s_send_cmd(0x2B);
 	data[0] = (area->y1 >> 8) & 0xFF;
-	data[1] = (area->y1 & 0xFF) + (st7735s_portrait_mode ? ROWSTART : COLSTART);
+	data[1] = (area->y1 & 0xFF) + (portrait_mode ? ROWSTART : COLSTART);
 	data[2] = (area->y2 >> 8) & 0xFF;
-	data[3] = (area->y2 & 0xFF) + (st7735s_portrait_mode ? ROWSTART : COLSTART);
+	data[3] = (area->y2 & 0xFF) + (portrait_mode ? ROWSTART : COLSTART);
 	st7735s_send_data(data, 4);
 
 	/*Memory write*/
@@ -250,10 +248,10 @@ static void st7735s_set_orientation(lv_disp_rot_t orientation)
 	/*
 		Portrait: 0x0: ST77XX_MADCTL_BGR
 		Portrait Inverted:  0xC0 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_BGR
-		Landscape Inverted: 0xA0 = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
-		Landscape: 0x60 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
+		Landscape: 0xA0 = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
+		Landscape Inverted: 0x60 = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_BGR
 	*/
-  uint8_t data_table[] = {0x00, 0x60, 0xC0, 0xA0};
+  uint8_t data_table[] = {0x00, 0xA0, 0xC0, 0x60};
 #ifdef CONFIG_LV_DISP_ST7735S_SWAP_RGB_TO_BGR
 	uint8_t data = data_table[orientation] | 0x8;
 #else
